@@ -1,5 +1,6 @@
 # Reproducible Research: Peer Assessment 1
 
+# testing git bash shell does it work with github 2?
 
 ## Loading and preprocessing the data
 
