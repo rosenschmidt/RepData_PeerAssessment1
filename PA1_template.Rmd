@@ -1,21 +1,124 @@
 # Reproducible Research: Peer Assessment 1
-
-# testing git bash shell does it work with github 2?
+================================================================================
 
 ## Loading and preprocessing the data
 
+We assume you are (your current working directory is)
+in the github repository, which includes this file.
 
+```{r readdata}
+d1 <- read.csv(unz("activity.zip","activity.csv"))
+d1Clean <- d1[!is.na(d1$steps),]
+```
+
+We remove the NA's, of which there are `r sum(is.na(d1$steps))` values.
+We call the first data frame d1 and the second d1Clean.
 
 ## What is mean total number of steps taken per day?
 
+We have two steps: first get the total number of steps taken each day.
 
+I'm a fan of avoiding packages if there's a basic way to do something.
+The first way is to use the "aggregate" function:
+
+```{r dailytotals1}
+dailyTotals <- aggregate(d1Clean$steps,by=list(d1Clean$date),sum)
+```
+But why are there only `r nrow(dailyTotals)` dates with totals,
+when the data set has `r length(unique(d1$date))` dates?
+The answer is that there are some dates with no non-NA values - the
+clean data set d1Clean has only `r length(unique(d1Clean$date))` dates.
+
+Another way to skin the cat: TAKE THIS OUT OR COMPLETE IT
+```{r dailytotals2}
+splitList <- split(d1Clean,d1Clean$date)
+```
+
+We can draw a histogram, two different ways for fun:
+```{r histogram}
+par(mfrow=c(1,2))
+hist(dailyTotals$x,main="Steps per day",ylab="Days",xlab=NULL)
+hist(dailyTotals$x,breaks=20,main="Steps per day",ylab="Days",xlab=NULL)
+```
+
+which shows far and away the typical day is 15-20 thousand steps.
+While this is vaguely bell-shaped, it's pretty fat-tailed.
+
+The basic R function "summary" gives us the mean and median:
+```{r summary1}
+summary(dailyTotals$x)
+```
+showing a mean of `r format(mean(dailyTotals$x),5)`
+and a median of `r format(median(dailyTotals$x),5)`
+which are pretty close. Well, it's **supposed** to show that - it's
+actually rounding to 10800. What if we try
+```{r summary2}
+summary(dailyTotals$x,digits=5)
+```
+instead? This teaches me that *knit2html doesn't
+always show what I see when I run the same command in R*.
+It must be making up its own mind about rounding or formatting.
+While there are options to correct this, I have to know how many 
+digits to specify. The result is not so general as one would like.
 
 ## What is the average daily activity pattern?
 
+We take the clean data (without the NA's), and we toss out the date 
+and use te interval as the factor, and apply aggregate. This gives us
+the graph we're looking for:
 
+```{r chunk2}
+d1Clean$interval <- as.factor(d1Clean$interval)
+
+hourlyTotals <- aggregate(d1Clean$steps,by=list(d1Clean$interval),mean)
+colnames(hourlyTotals) <- c("interval","steps")
+
+plot(hourlyTotals$interval,hourlyTotals$steps,
+        type = "l",
+        xlab="time of day",
+        ylab="avg steps in interval")
+lines(hourlyTotals$steps)
+
+```
+
+Well this makes sense - our individual goes to bed at night. 
+For the life of me, however, I can't make this a line drawing -
+the type="l" option is being ignored. No matter what I do,
+I can't connect the dots. Evaluator, can you help?
 
 ## Imputing missing values
 
 
 
 ## Are there differences in activity patterns between weekdays and weekends?
+
+First we add the day of week, then we figure out what the hell it means.
+We can add columns to a data frame simply by naming them:
+```{r addDayOfWeek }
+
+d1Clean$dayOfWeek <- as.POSIXlt(as.character(d1Clean$date))$wday
+d1Clean$isWeekDay <- d1Clean$dayOfWeek %in% 1:5
+d1Clean$isWeekDay <- as.factor(d1Clean$isWeekDay)
+
+d2Clean <- split(d1Clean,d1Clean$isWeekDay)
+weekdayHourlyTotals <- aggregate(d2Clean[[1]]$steps,by=list(d2Clean[[1]]$interval),mean)
+colnames(weekdayHourlyTotals) <- c("interval","steps")
+weekendHourlyTotals <- aggregate(d2Clean[[2]]$steps,by=list(d2Clean[[2]]$interval),mean)
+colnames(weekendHourlyTotals) <- c("interval","steps")
+
+par(mfrow=c(2,1))
+plot(weekdayHourlyTotals$interval,weekdayHourlyTotals$steps,
+        type = "l",
+        main="Weekdays",
+        xlab="time of day",
+        ylab="avg steps in interval")
+lines(weekdayHourlyTotals$steps)
+plot(weekendHourlyTotals$interval,weekendHourlyTotals$steps,
+        type = "l",
+        main="Weekends",
+        xlab="time of day",
+        ylab="avg steps in interval")
+lines(weekendHourlyTotals$steps)
+```
+
+================================================================================
