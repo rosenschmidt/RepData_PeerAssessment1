@@ -3,69 +3,102 @@
 
 ## Loading and preprocessing the data
 
+I ran this in R gui 3.1.1, rather than Rstudio, using the command line
+knit2html and browseURL, as Peng described in the lecture. I doubt that
+this matters, though it might explain why my summary() command shows
+one thing on the screen and another thing in the .html file, as discussed
+below.
+
 We assume you are (your current working directory is)
-in the github repository, which includes this file.
+in the github repository, which includes this file. Therefore,
+the following works:
 
 ```{r readdata}
 d1 <- read.csv(unz("activity.zip","activity.csv"))
 d1Clean <- d1[!is.na(d1$steps),]
 ```
 
-We remove the NA's, of which there are `r sum(is.na(d1$steps))` values.
-We call the first data frame d1 and the second d1Clean.
+Since we know from the instructions the number of observations,
+we check that there are the correct number of rows:
+
+```{r intro}
+str(d1)
+```
+
+and this shows that there are `r nrow(d1)` rows of data.
+
+We then removed the NA's, of which there are `r sum(is.na(d1$steps))` values.
+We call the first data frame d1, and the second d1Clean.
 
 ## What is mean total number of steps taken per day?
 
 We have two steps: first get the total number of steps taken each day.
+Then take the averages.
 
 I'm a fan of avoiding packages if there's a basic way to do something.
-The first way is to use the "aggregate" function:
+One way to do this is to use the "aggregate" function:
 
 ```{r dailytotals1}
 dailyTotals <- aggregate(d1Clean$steps,by=list(d1Clean$date),sum)
+colnames(dailyTotals) <- c("date","steps")
 ```
 But why are there only `r nrow(dailyTotals)` dates with totals,
 when the data set has `r length(unique(d1$date))` dates?
 The answer is that there are some dates with no non-NA values - the
 clean data set d1Clean has only `r length(unique(d1Clean$date))` dates.
 
-Another way to skin the cat: TAKE THIS OUT OR COMPLETE IT
-```{r dailytotals2}
-splitList <- split(d1Clean,d1Clean$date)
-```
-
 We can draw a histogram, two different ways for fun:
 ```{r histogram}
 par(mfrow=c(1,2))
-hist(dailyTotals$x,main="Steps per day",ylab="Days",xlab=NULL)
-hist(dailyTotals$x,breaks=20,main="Steps per day",ylab="Days",xlab=NULL)
+hist(dailyTotals$steps,
+        main="Steps per day",
+        ylab="Days", xlab=NULL)
+hist(dailyTotals$steps,
+        breaks=20,
+        main="Steps per day",
+        ylab="Days", xlab=NULL)
 ```
 
-which shows far and away the typical day is 15-20 thousand steps.
-While this is vaguely bell-shaped, it's pretty fat-tailed.
+which shows far and away the typical day is 15-20 thousand steps,
+and that the median is likely to be in the 11,000 range.
+Of course we should be curious about the day or days on the very left,
+on which there was almost no movement at all. The minimum, below,
+is a mere 41! Not believable, unless perhaps
+our subject were hospitalized.
 
-The basic R function "summary" gives us the mean and median:
+The finer histogram columns, on the right, show that
+while this is vaguely bell-shaped, it's pretty fat-tailed.
+Removing the outlier, and increasing the number of days, we could probably
+get away with modeling this as a normal variable.
+
+(Curiously,fig.height and fig.width made it *worse* (i.e. way skinny
+or with unreadable titles) as in r histogram, fig.width=4,fig.height=30.
+Evaluators, can you suggest anything?
+
+The basic R function "summary" gives is *supposed to* give
+us the mean and median:
 ```{r summary1}
-summary(dailyTotals$x)
+summary(dailyTotals$steps)
 ```
-showing a mean of `r format(mean(dailyTotals$x),5)`
-and a median of `r format(median(dailyTotals$x),5)`
+showing a mean of `r format(mean(dailyTotals$steps),5)`
+and a median of `r format(median(dailyTotals$steps),5)`
 which are pretty close. Well, it's **supposed** to show that - it's
 actually rounding to 10800. What if we try
 ```{r summary2}
-summary(dailyTotals$x,digits=5)
+summary(dailyTotals$steps,digits=5)
 ```
 instead? This teaches me that *knit2html doesn't
 always show what I see when I run the same command in R*.
 It must be making up its own mind about rounding or formatting.
+
 While there are options to correct this, I have to know how many 
 digits to specify. The result is not so general as one would like.
 
 ## What is the average daily activity pattern?
 
-We take the clean data (without the NA's), and we toss out the date 
-and use te interval as the factor, and apply aggregate. This gives us
-the graph we're looking for:
+We take the clean data (without the NA's), and we 
+use the interval as the factor, and apply aggregate.
+This gives us the graph we're looking for:
 
 ```{r chunk2}
 d1Clean$interval <- as.factor(d1Clean$interval)
@@ -84,11 +117,123 @@ lines(hourlyTotals$steps)
 Well this makes sense - our individual goes to bed at night. 
 For the life of me, however, I can't make this a line drawing -
 the type="l" option is being ignored. No matter what I do,
-I can't connect the dots. Evaluator, can you help?
+I can't connect the dots. So my workaround is to add the call to lines,
+so the graph looks vaguely correct. Evaluator, can you help?
+
+
+We are asked to locate the maximum, which we know about where it will lie.
+We use the R match function, or the which function:
+
+```{r findMax}
+max(hourlyTotals$steps)
+maxLoc1 <- which(hourlyTotals$steps == max(hourlyTotals$steps))
+maxLoc2 <- match(max(hourlyTotals$steps),hourlyTotals$steps)
+maxLoc1
+maxLoc2
+
+```
+We see that the `r maxLoc1`-th
+element of our totals is the maximum, which occurs at interval
+hourlyTotals$interval[`r maxLoc1`], `r hourlyTotals$interval[maxLoc1]`.
+Wherever this subject goes every day,
+they get there about 8:30 or 8:45 in the morning.
 
 ## Imputing missing values
 
+As mentioned above, there are `r sum(is.na(d1$steps))` missing values.
+The clean data set d1Clean has only `r length(unique(d1Clean$date))` dates,
+while the raw data has `r length(unique(d1$Date))` dates.
 
+*To devise a strategy, it is prudent first to look.*
+
+So are they sporadic or do the missing values follow some pattern?
+Visusal inspection (in say Excel) shows that all the NA's are on 8 dates,
+and those dates have no non-missing values. 
+Visual inspection of the 8 dates indicates 
+about about 2 are weekends and 6 are weekdays.
+Given this pattern, it is curious
+that the assignment suggests one method of replacing missing values as
+using the average for that date - this average does not exist!
+
+So let's verify this. This should be done with plyr, but I haven't figured
+that out yet, so let's do it the hard way:
+
+```{r REPLACE_WITH_MELT}
+
+d2 <- d1
+d2$is.na <- is.na(d2$steps)
+d2 <- split(d2,d2$date)
+results <- data.frame(length(d2),2)
+results <- cbind(as.vector(unique(d1$date)),results)
+colnames(results) <- c("date","Nr of Obs","NAs")
+for(i in 1:length(d2))
+     {
+        results[i,1] <- d2[[i]]$date[1]
+        results[i,2] <- length(d2[[i]]$steps)
+        results[i,3] <- sum(d2[[i]]$is.na)
+     }
+results
+```
+
+*So no obvious method of filling in the missing values will really
+change much in our analysis.* Any reasonable method of filling in the
+missing data will, therefore, not change the mean and median very much.
+In fact we would *expect* it **NOT** to.
+
+Nevertheless, an assignment is an assignment, so here we go.
+Each day has 288 intervals (24 * 60 / 5),
+so we will just take the average steps per day
+and fill them in.  Our **R** code might go something like this:
+
+ - use our d2 list of data from directly above, split by date
+ - test for NA (if one step is missing, **all** of the intervals are)
+ - each day has 288 intervals, so assign the 288 hourlyTotals
+
+```{r fillin1}
+for(i in 1:length(d2))
+     {
+        if(is.na(d2[[i]]$steps[1])) # if one is they all are
+            {
+                d2[[i]]$steps <- hourlyTotals$steps
+            }
+     }
+
+# there is surely a better way to to this...
+# note that in markdown, a single hash (#) inside the R code
+# is just a comment.
+
+d3 <- d2[[1]]
+for(i in 2:length(d2))
+     {
+        d3 <- rbind(d3,d2[[i]])
+     }
+        
+```
+
+Now we demonstrate that filling in missing values with averages of the other data
+really won't change the overall average:
+
+```{r dailytotals3}
+
+dailyTotalsd3 <- aggregate(d3$steps,by=list(d3$date),sum)
+colnames(dailyTotalsd3) <- c("date","steps")
+
+par(mfrow=c(1,2))
+hist(dailyTotalsd3$steps,
+        main="Steps per day, filling in missing values",
+        ylab="Days", xlab=NULL)
+hist(dailyTotalsd3$steps,
+        breaks=20,
+        main="Steps per day, filling in missing values",
+        ylab="Days", xlab=NULL)
+summary(dailyTotalsd3$steps,digits=5)
+```
+There are simply now more days, and the median and mean have,
+not surprisingly, pulled closer together.
+
+**NOTE:** *Had there been some interesting pattern to the missing values,
+or had I taken some other approach, this analysis of imputing missing values 
+might have had a more interesting result.
 
 ## Are there differences in activity patterns between weekdays and weekends?
 
@@ -101,11 +246,13 @@ d1Clean$isWeekDay <- d1Clean$dayOfWeek %in% 1:5
 d1Clean$isWeekDay <- as.factor(d1Clean$isWeekDay)
 
 d2Clean <- split(d1Clean,d1Clean$isWeekDay)
-weekdayHourlyTotals <- aggregate(d2Clean[[1]]$steps,by=list(d2Clean[[1]]$interval),mean)
+weekdayHourlyTotals <- aggregate(d2Clean[[1]]$steps,
+        by=list(d2Clean[[1]]$interval),mean)
 colnames(weekdayHourlyTotals) <- c("interval","steps")
-weekendHourlyTotals <- aggregate(d2Clean[[2]]$steps,by=list(d2Clean[[2]]$interval),mean)
+weekendHourlyTotals <- aggregate(d2Clean[[2]]$steps,
+        by=list(d2Clean[[2]]$interval),mean)
 colnames(weekendHourlyTotals) <- c("interval","steps")
-
+# rm(d2Clean)
 par(mfrow=c(2,1))
 plot(weekdayHourlyTotals$interval,weekdayHourlyTotals$steps,
         type = "l",
@@ -120,5 +267,13 @@ plot(weekendHourlyTotals$interval,weekendHourlyTotals$steps,
         ylab="avg steps in interval")
 lines(weekendHourlyTotals$steps)
 ```
+
+The differences and similarities between weekends and weekdays are striking.
+Clearly, our subject goes somewhere every morning on foot at a regular time,
+seven days a week. But on weekends he/she mills about the house for a while
+beforehand, and then is a couch potato. Perhaps our subject does outdoor
+or manual work. If weekends and weekdays were reversed, one might infer
+an office worker - walks to work and sits at a desk, but on weekeends
+does stuff around the house.
 
 ================================================================================
