@@ -1,6 +1,7 @@
 # Reproducible Research: Peer Assessment 1
 ================================================================================
 
+================================================================================
 ## Loading and preprocessing the data
 
 I ran this in R gui 3.1.1, rather than Rstudio, using the command line
@@ -39,6 +40,7 @@ and this shows that there are 17568 rows of data.
 We then removed the NA's, of which there are 2304 values.
 We call the first data frame d1, and the second d1Clean.
 
+================================================================================
 ## What is mean total number of steps taken per day?
 
 We have two steps: first get the total number of steps taken each day.
@@ -119,6 +121,7 @@ It must be making up its own mind about rounding or formatting.
 While there are options to correct this, I have to know how many 
 digits to specify. The result is not so general as one would like.
 
+================================================================================
 ## What is the average daily activity pattern?
 
 We take the clean data (without the NA's), and we 
@@ -132,21 +135,24 @@ d1Clean$interval <- as.factor(d1Clean$interval)
 hourlyTotals <- aggregate(d1Clean$steps,by=list(d1Clean$interval),mean)
 colnames(hourlyTotals) <- c("interval","steps")
 
-plot(hourlyTotals$interval,hourlyTotals$steps,
+# note you must convert the interval to character, or a line drawing
+# does not work!! - the type="l" is ignored. This is what I did before
+# I figured it out (for my own records).
+# plot(hourlyTotals$interval,hourlyTotals$steps,
+#         type = "l",
+#         xlab="time of day",
+#         ylab="avg steps in interval")
+# lines(hourlyTotals$steps)
+
+plot(as.character(hourlyTotals$interval),hourlyTotals$steps,
         type = "l",
         xlab="time of day",
         ylab="avg steps in interval")
-lines(hourlyTotals$steps)
 ```
 
 ![plot of chunk chunk2](figure/chunk2.png) 
 
 Well this makes sense - our individual goes to bed at night. 
-For the life of me, however, I can't make this a line drawing -
-the type="l" option is being ignored. No matter what I do,
-I can't connect the dots. So my workaround is to add the call to lines,
-so the graph looks vaguely correct. Evaluator, can you help?
-
 
 We are asked to locate the maximum, which we know about where it will lie.
 We use the R match function, or the which function:
@@ -183,6 +189,7 @@ hourlyTotals$interval[104], 835.
 Wherever this subject goes every day,
 they get there about 8:30 or 8:45 in the morning.
 
+================================================================================
 ## Imputing missing values
 
 As mentioned above, there are 2304 missing values.
@@ -355,6 +362,7 @@ not surprisingly, pulled closer together.
 or had I taken some other approach, this analysis of imputing missing values 
 might have had a more interesting result.
 
+================================================================================
 ## Are there differences in activity patterns between weekdays and weekends?
 
 First we add the day of week, then we figure out what the hell it means.
@@ -374,18 +382,16 @@ weekendHourlyTotals <- aggregate(d2Clean[[2]]$steps,
 colnames(weekendHourlyTotals) <- c("interval","steps")
 # rm(d2Clean)
 par(mfrow=c(2,1))
-plot(weekdayHourlyTotals$interval,weekdayHourlyTotals$steps,
+plot(as.character(weekdayHourlyTotals$interval),weekdayHourlyTotals$steps,
         type = "l",
         main="Weekdays",
         xlab="time of day",
         ylab="avg steps in interval")
-lines(weekdayHourlyTotals$steps)
-plot(weekendHourlyTotals$interval,weekendHourlyTotals$steps,
+plot(as.character(weekendHourlyTotals$interval),weekendHourlyTotals$steps,
         type = "l",
         main="Weekends",
         xlab="time of day",
         ylab="avg steps in interval")
-lines(weekendHourlyTotals$steps)
 ```
 
 ![plot of chunk addDayOfWeek](figure/addDayOfWeek.png) 
