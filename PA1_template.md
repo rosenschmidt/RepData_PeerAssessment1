@@ -11,8 +11,8 @@ one thing on the screen and another thing in the .html file, as discussed
 below.
 
 We assume you are (your current working directory is)
-in the github repository, which includes this file. Therefore,
-the following works:
+in the github repository, which includes both the zip and the .Rmd file.
+Therefore, the following works:
 
 
 ```r
@@ -35,7 +35,7 @@ str(d1)
 ##  $ interval: int  0 5 10 15 20 25 30 35 40 45 ...
 ```
 
-and this shows that there are 17568 rows of data.
+and this shows that there are the expected 17568 rows of data.
 
 We then removed the NA's, of which there are 2304 values.
 We call the first data frame d1, and the second d1Clean.

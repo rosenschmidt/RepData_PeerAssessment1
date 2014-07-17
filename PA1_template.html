@@ -205,8 +205,8 @@ one thing on the screen and another thing in the .html file, as discussed
 below.</p>
 
 <p>We assume you are (your current working directory is)
-in the github repository, which includes this file. Therefore,
-the following works:</p>
+in the github repository, which includes both the zip and the .Rmd file.
+Therefore, the following works:</p>
 
 <pre><code class="r">d1 &lt;- read.csv(unz(&quot;activity.zip&quot;,&quot;activity.csv&quot;))
 d1Clean &lt;- d1[!is.na(d1$steps),]
@@ -224,7 +224,7 @@ we check that there are the correct number of rows:</p>
 ##  $ interval: int  0 5 10 15 20 25 30 35 40 45 ...
 </code></pre>
 
-<p>and this shows that there are 17568 rows of data.</p>
+<p>and this shows that there are the expected 17568 rows of data.</p>
 
 <p>We then removed the NA&#39;s, of which there are 2304 values.
 We call the first data frame d1, and the second d1Clean.</p>
