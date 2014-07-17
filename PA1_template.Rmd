@@ -11,8 +11,8 @@ one thing on the screen and another thing in the .html file, as discussed
 below.
 
 We assume you are (your current working directory is)
-in the github repository, which includes this file. Therefore,
-the following works:
+in the github repository, which includes both the zip and the .Rmd file.
+Therefore, the following works:
 
 ```{r readdata}
 d1 <- read.csv(unz("activity.zip","activity.csv"))
@@ -26,7 +26,7 @@ we check that there are the correct number of rows:
 str(d1)
 ```
 
-and this shows that there are `r nrow(d1)` rows of data.
+and this shows that there are the expected `r nrow(d1)` rows of data.
 
 We then removed the NA's, of which there are `r sum(is.na(d1$steps))` values.
 We call the first data frame d1, and the second d1Clean.
